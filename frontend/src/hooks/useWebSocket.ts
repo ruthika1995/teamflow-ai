@@ -16,7 +16,7 @@ export function useWebSocket(workspaceId: string | null, userId: string | null) 
 
     // Use current host or localhost:8000
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.hostname === 'localhost' ? 'localhost:8008' : window.location.host;
+    const wsHost = window.location.port === '5173' ? 'localhost:8008' : window.location.host;
     const wsUrl = `${wsProtocol}//${wsHost}/ws/workspace/${workspaceId}?user_id=${userId || 'anonymous'}`;
 
     try {

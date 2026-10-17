@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     # AI - OpenRouter
     OPENROUTER_API_KEY: str = ""
-    OPENROUTER_MODEL: str = "meta-llama/llama-3.3-70b-instruct:free"
+    OPENROUTER_MODEL: str = "meta-llama/llama-3.3-70b-instruct"
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     
     # CORS

@@ -1,5 +1,8 @@
+import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
@@ -59,9 +62,7 @@ async def websocket_workspace_endpoint(
     await manager.connect(websocket, workspace_id, user_id)
     try:
         while True:
-            # Keep-alive or handle incoming messages directly over socket
             data = await websocket.receive_text()
-            # Echo or process if needed
             await websocket.send_text(f'{{"type": "PONG", "data": {{"echo": true}}}}')
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -74,13 +75,36 @@ def health_check():
         "status": "healthy",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
-        "database": "sqlite" if settings.DATABASE_URL.startswith("sqlite") else "postgresql"
+        "database": "sqlite" if settings.DATABASE_URL.startswith("sqlite") else "postgresql",
+        "openrouter_configured": bool(settings.OPENROUTER_API_KEY)
     }
 
-@app.get("/")
-def root():
-    return {
-        "message": f"Welcome to {settings.PROJECT_NAME} API",
-        "docs_url": "/docs",
-        "api_v1": settings.API_V1_STR
-    }
+# Mount Frontend static files for single-origin unified deployment (Render)
+frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend/dist"))
+if not os.path.exists(frontend_dist):
+    frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend/dist"))
+
+if os.path.exists(frontend_dist):
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api") or full_path in ["docs", "openapi.json", "redoc", "health"]:
+            return None
+        file_path = os.path.join(frontend_dist, full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        index_file = os.path.join(frontend_dist, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
+else:
+    @app.get("/")
+    def root():
+        return {
+            "message": f"Welcome to {settings.PROJECT_NAME} API",
+            "docs_url": "/docs",
+            "api_v1": settings.API_V1_STR
+        }

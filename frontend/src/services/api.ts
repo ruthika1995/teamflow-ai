@@ -6,7 +6,8 @@ import {
   AIMeetingSummaryResponse, AIChatResponse
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8008/api';
+const isProd = import.meta.env.PROD;
+const API_BASE = import.meta.env.VITE_API_URL || (isProd ? '/api' : 'http://localhost:8008/api');
 
 class ApiService {
   private token: string | null = null;
