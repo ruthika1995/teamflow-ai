@@ -1,0 +1,22 @@
+# Python & Virtualenv
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+teamflow.db
+teamflow.db-shm
+teamflow.db-wal
+.pytest_cache/
+
+# Node & Frontend
+node_modules/
+dist/
+.oxlintrc.json
+*.local
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
