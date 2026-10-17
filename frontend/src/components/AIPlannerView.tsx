@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Sparkles, CheckCircle2, Clock, Shield, ArrowRight,
-  ListTodo, Layers, RefreshCw, Send
+  Sparkles, CheckCircle2, Clock, Layers, ArrowRight, Check
 } from 'lucide-react';
 import { Project, AIProjectPlanResponse, AIPlanTask } from '../types';
 import { api } from '../services/api';
@@ -13,10 +12,10 @@ interface AIPlannerViewProps {
 }
 
 const PRESETS = [
-  "We need to build an e-commerce website with React and FastAPI, including Stripe checkout and inventory management.",
-  "Build a cross-platform mobile app for real-time logistics tracking and driver notifications.",
-  "Develop an AI Customer Support Agent with human-in-the-loop escalation and RAG over Zendesk tickets.",
-  "Implement a multi-tenant SaaS team collaboration workspace with real-time WebSockets and RBAC."
+  "Build an e-commerce website with React and FastAPI, including Stripe checkout and inventory management.",
+  "Cross-platform mobile app for real-time logistics tracking and field driver updates.",
+  "Customer support escalation workflow with human-in-the-loop approvals and ticket categorization.",
+  "Team collaboration workspace with real-time WebSocket state synchronization and RBAC."
 ];
 
 export const AIPlannerView: React.FC<AIPlannerViewProps> = ({
@@ -56,7 +55,7 @@ export const AIPlannerView: React.FC<AIPlannerViewProps> = ({
       });
 
       await api.bulkCreateTasks(currentProject.id, allTasks);
-      setSuccessMessage(`Successfully created ${allTasks.length} tasks in ${currentProject.name}!`);
+      setSuccessMessage(`Created ${allTasks.length} tasks in ${currentProject.name}`);
       onTasksCreated();
     } catch (err) {
       console.error("Failed to bulk create tasks", err);
@@ -65,65 +64,73 @@ export const AIPlannerView: React.FC<AIPlannerViewProps> = ({
     }
   };
 
+  const getPriorityTagClass = (p: string) => {
+    switch (p) {
+      case 'URGENT': return 'tag-urgent';
+      case 'HIGH': return 'tag-high';
+      case 'MEDIUM': return 'tag-medium';
+      default: return 'tag-low';
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '20px 0', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '16px 0', maxWidth: 1000 }}>
       
       {/* Header */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: 'linear-gradient(135deg, #6366f1, #38bdf8)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <Sparkles size={16} color="#fff" />
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>AI Project Planner</h1>
-        </div>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-          Describe your project requirements or goals. OpenRouter AI will architect a 4-phase milestone execution plan and generate actual tasks.
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+          Project Planning & Milestone Decomposition
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
+          Describe technical requirements or sprint goals. The system synthesizes a multi-phase implementation plan with estimated effort.
         </p>
       </div>
 
-      {/* Prompt Form */}
-      <div className="glass-panel" style={{ padding: 20, borderRadius: 'var(--radius-lg)' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', marginBottom: 8, textTransform: 'uppercase' }}>
-          Project Scope & Technical Requirements
+      {/* 1. Project Brief Section */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-md)',
+        padding: '16px 20px'
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 8 }}>
+          Step 1: Project Scope Brief
         </div>
+
         <textarea
           className="input"
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
-          placeholder="e.g. We need to build an e-commerce website with React and FastAPI..."
-          style={{ minHeight: 90, fontSize: 14 }}
+          placeholder="Specify deliverables, technologies, and target functionality..."
+          style={{ minHeight: 70, fontSize: 13 }}
         />
 
-        {/* Preset quick buttons */}
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>Try a preset:</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {/* Presets */}
+        <div style={{ marginTop: 10 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>Example templates:</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {PRESETS.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setPrompt(p)}
-                className="btn btn-outline btn-sm"
-                style={{ fontSize: 11, textAlign: 'left' }}
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: 11, padding: '2px 6px', border: '1px solid var(--border-subtle)' }}
               >
-                {p.slice(0, 48)}...
+                {p.slice(0, 44)}...
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
           <button
             onClick={handleGeneratePlan}
             disabled={loading || !prompt.trim()}
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm"
           >
-            <Sparkles size={14} />
-            {loading ? 'Synthesizing Architecture...' : 'Generate Project Plan'}
+            <Sparkles size={13} />
+            <span>{loading ? 'Synthesizing Architecture...' : 'Generate Implementation Plan'}</span>
           </button>
         </div>
       </div>
@@ -131,86 +138,97 @@ export const AIPlannerView: React.FC<AIPlannerViewProps> = ({
       {/* Success Banner */}
       {successMessage && (
         <div style={{
-          background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)',
-          borderRadius: 8, padding: '14px 18px', display: 'flex', alignItems: 'center',
+          background: 'var(--status-success-subtle)', border: '1px solid var(--status-success-border)',
+          borderRadius: 'var(--radius-sm)', padding: '10px 14px', display: 'flex', alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#a7f3d0', fontSize: 13, fontWeight: 600 }}>
-            <CheckCircle2 size={18} color="#10b981" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6ee7b7', fontSize: 13 }}>
+            <CheckCircle2 size={15} />
             <span>{successMessage}</span>
           </div>
-          <button onClick={onNavigateToKanban} className="btn btn-primary btn-sm">
-            View in Kanban Board →
+          <button onClick={onNavigateToKanban} className="btn btn-secondary btn-sm" style={{ fontSize: 11 }}>
+            View in Board →
           </button>
         </div>
       )}
 
-      {/* Plan Preview */}
+      {/* 2. Structured Implementation Workspace */}
       {plan && (
-        <div className="glass-panel" style={{ padding: 24, borderRadius: 'var(--radius-lg)' }}>
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-md)',
+          padding: '20px'
+        }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 16, marginBottom: 20 }}>
+          {/* Plan Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 14, marginBottom: 16 }}>
             <div>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>{plan.plan_title}</h2>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{plan.summary}</p>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+                Step 2: Generated Implementation Plan
+              </div>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>{plan.plan_title}</h2>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{plan.summary}</p>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Total Effort</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-cyan)' }}>{plan.total_estimated_hours} hrs</div>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Total Effort</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                  {plan.total_estimated_hours} hrs
+                </div>
               </div>
 
               <button
                 onClick={handleCreateTasks}
                 disabled={creatingTasks}
-                className="btn btn-primary"
-                style={{ padding: '8px 18px' }}
+                className="btn btn-primary btn-sm"
               >
-                <CheckCircle2 size={15} />
-                {creatingTasks ? 'Creating Tasks...' : 'Create Tasks in Board'}
+                <Check size={13} />
+                <span>{creatingTasks ? 'Creating...' : 'Approve & Create Tasks'}</span>
               </button>
             </div>
           </div>
 
-          {/* Milestones and Tasks */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Phased Milestones */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {plan.milestones.map((m, mIdx) => (
               <div key={mIdx} style={{
-                background: 'var(--bg-surface-sunken)', borderRadius: 10,
-                border: '1px solid var(--border-subtle)', padding: 16
+                background: 'var(--bg-surface-sunken)', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-subtle)', padding: 12
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <Layers size={16} color="var(--color-primary)" />
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{m.milestone_name}</h3>
-                  <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Layers size={13} color="var(--color-accent)" />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{m.milestone_name}</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
                     {m.tasks.length} tasks
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 8 }}>
                   {m.tasks.map((task, tIdx) => (
                     <div key={tIdx} style={{
-                      padding: 12, background: 'var(--bg-surface)', borderRadius: 8,
+                      padding: 10, background: 'var(--bg-surface)', borderRadius: 'var(--radius-xs)',
                       border: '1px solid var(--border-subtle)'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span className={`badge badge-${task.priority.toLowerCase()}`}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span className={`tag ${getPriorityTagClass(task.priority)}`} style={{ fontSize: 10 }}>
                           {task.priority}
                         </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-dim)' }}>
-                          <Clock size={11} />
-                          <span>{task.estimated_hours}h</span>
-                        </div>
+                        <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                          {task.estimated_hours}h
+                        </span>
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 4 }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>
                         {task.title}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
                         {task.description}
                       </div>
                       {task.suggested_role && (
-                        <div style={{ fontSize: 10, color: 'var(--color-cyan)', marginTop: 8, fontWeight: 600 }}>
+                        <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 6, fontFamily: 'var(--font-mono)' }}>
                           Role: {task.suggested_role}
                         </div>
                       )}

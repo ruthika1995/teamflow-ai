@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  X, Clock, Calendar, User, Tag, Sparkles, Send, Trash2,
-  AlertCircle, CheckCircle2, ChevronRight, MessageSquare
+  X, Clock, Calendar, Tag, Sparkles, Send, Trash2,
+  CheckCircle2, MessageSquare
 } from 'lucide-react';
-import { Task, WorkspaceMember, Comment, TaskStatus, TaskPriority, AISubtask } from '../types';
+import { Task, WorkspaceMember, TaskStatus, TaskPriority, AISubtask } from '../types';
 import { api } from '../services/api';
 
 interface TaskModalProps {
@@ -25,7 +25,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 }) => {
   const [detail, setDetail] = useState<Task>(task);
   const [newComment, setNewComment] = useState('');
-  const [loadingComments, setLoadingComments] = useState(false);
   const [breakingDown, setBreakingDown] = useState(false);
   const [aiSubtasks, setAiSubtasks] = useState<AISubtask[] | null>(null);
   const [subtaskRationale, setSubtaskRationale] = useState('');
@@ -37,13 +36,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const loadFullDetail = async () => {
     try {
-      setLoadingComments(true);
       const res = await api.getTaskDetail(task.id);
       setDetail(res);
     } catch (e) {
       console.warn("Could not load task detail", e);
-    } finally {
-      setLoadingComments(false);
     }
   };
 
@@ -116,95 +112,99 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 750, padding: 24 }}>
+      <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 740, padding: 20 }}>
         
-        {/* Header with Title and Close Button */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, paddingBottom: 14, borderBottom: '1px solid var(--border-subtle)' }}>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <span className={`badge badge-${detail.status.toLowerCase()}`}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <span className={`tag tag-${detail.status.toLowerCase()}`}>
                 {detail.status.replace('_', ' ')}
               </span>
-              <span className={`badge badge-${detail.priority.toLowerCase()}`}>
+              <span className={`tag tag-${detail.priority.toLowerCase()}`}>
                 {detail.priority}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>ID: {detail.id.slice(0, 8)}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                #{detail.id.slice(0, 8)}
+              </span>
             </div>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
               {detail.title}
             </h2>
           </div>
 
-          <button onClick={onClose} className="btn btn-outline" style={{ width: 32, height: 32, padding: 0 }}>
-            <X size={16} />
+          <button onClick={onClose} className="btn btn-ghost" style={{ width: 26, height: 26, padding: 0 }}>
+            <X size={15} />
           </button>
         </div>
 
-        {/* Two-Column Grid: Left Details & AI Breakdown, Right Metadata & Comments */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24, marginTop: 20 }}>
+        {/* Two-Column Layout */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 20, marginTop: 16 }}>
           
-          {/* Left Column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Left Column: Description & Subtasks & Comments */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            
             {/* Description */}
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
-                DESCRIPTION
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
+                Description
               </div>
               <div style={{
-                fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6,
-                background: 'var(--bg-surface-sunken)', padding: 12, borderRadius: 8,
+                fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5,
+                background: 'var(--bg-surface-sunken)', padding: 10, borderRadius: 'var(--radius-sm)',
                 border: '1px solid var(--border-subtle)', minHeight: 60
               }}>
                 {detail.description || 'No detailed description provided.'}
               </div>
             </div>
 
-            {/* AI Task Breakdown Section */}
+            {/* AI Task Decomposition Section */}
             <div style={{
-              background: 'rgba(99, 102, 241, 0.08)',
-              border: '1px solid rgba(99, 102, 241, 0.25)',
-              borderRadius: 'var(--radius-md)', padding: 16
+              background: 'var(--bg-surface-sunken)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)', padding: 12
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Sparkles size={16} color="var(--color-primary)" />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>AI Task Decomposition</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Sparkles size={13} color="var(--color-accent)" />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Decompose Task</span>
                 </div>
                 
                 <button
                   onClick={handleAIDecompose}
                   disabled={breakingDown}
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: 11, padding: '3px 8px' }}
                 >
-                  {breakingDown ? 'Decomposing...' : 'Decompose with AI'}
+                  {breakingDown ? 'Analyzing...' : 'Break down with AI'}
                 </button>
               </div>
 
               {subtaskRationale && (
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.4 }}>
                   {subtaskRationale}
                 </div>
               )}
 
               {aiSubtasks && (
-                <div style={{ marginTop: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 8 }}>
-                    Generated Subtasks ({aiSubtasks.length}):
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
+                    Proposed Subtasks ({aiSubtasks.length}):
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {aiSubtasks.map((sub, idx) => (
                       <div key={idx} style={{
-                        padding: '8px 10px', background: 'var(--bg-surface)', borderRadius: 6,
+                        padding: '6px 8px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-xs)',
                         border: '1px solid var(--border-subtle)', display: 'flex',
                         alignItems: 'center', justifyContent: 'space-between'
                       }}>
                         <div>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{sub.title}</div>
-                          <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{sub.description}</div>
+                          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>{sub.title}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>{sub.description}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{sub.estimated_hours}h</span>
-                          <span className={`badge badge-${sub.priority.toLowerCase()}`} style={{ fontSize: 9 }}>
+                          <span style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>{sub.estimated_hours}h</span>
+                          <span className={`tag tag-${sub.priority.toLowerCase()}`} style={{ fontSize: 9 }}>
                             {sub.priority}
                           </span>
                         </div>
@@ -212,13 +212,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     ))}
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
                     <button
                       onClick={handleApproveSubtasks}
                       disabled={addingSubtasks}
                       className="btn btn-primary btn-sm"
                     >
-                      <CheckCircle2 size={13} />
+                      <CheckCircle2 size={12} />
                       {addingSubtasks ? 'Adding...' : 'Approve & Add to Board'}
                     </button>
                   </div>
@@ -226,103 +226,100 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               )}
             </div>
 
-            {/* Comments Stream */}
+            {/* Comments Thread */}
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <MessageSquare size={13} />
-                <span>COMMENTS ({detail.comments?.length || 0})</span>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
+                Activity & Comments ({detail.comments?.length || 0})
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 200, overflowY: 'auto', marginBottom: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto', marginBottom: 10 }}>
                 {(!detail.comments || detail.comments.length === 0) ? (
-                  <div style={{ fontSize: 12, color: 'var(--text-dim)', fontStyle: 'italic' }}>
-                    No comments yet. Start the conversation!
+                  <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+                    No comments on this task yet.
                   </div>
                 ) : (
                   detail.comments.map(c => (
                     <div key={c.id} style={{
-                      padding: 10, background: 'var(--bg-surface-sunken)', borderRadius: 8,
+                      padding: 8, background: 'var(--bg-surface-sunken)', borderRadius: 'var(--radius-xs)',
                       border: '1px solid var(--border-subtle)'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <img
                             src={c.user?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
                             alt={c.user?.full_name}
-                            style={{ width: 18, height: 18, borderRadius: '50%' }}
+                            style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover' }}
                           />
-                          <span style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>{c.user?.full_name}</span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)' }}>{c.user?.full_name}</span>
                         </div>
-                        <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
+                        <span style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
                           {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.content}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{c.content}</div>
                     </div>
                   ))
                 )}
               </div>
 
-              {/* Add Comment Input Form */}
-              <form onSubmit={handleAddComment} style={{ display: 'flex', gap: 8 }}>
+              {/* Add Comment Input */}
+              <form onSubmit={handleAddComment} style={{ display: 'flex', gap: 6 }}>
                 <input
                   type="text"
-                  placeholder="Write a comment..."
+                  placeholder="Leave a comment..."
                   className="input"
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
+                  style={{ height: 32, fontSize: 12 }}
                 />
-                <button type="submit" className="btn btn-primary" style={{ padding: '0 12px' }}>
-                  <Send size={14} />
+                <button type="submit" className="btn btn-secondary btn-sm" style={{ padding: '0 10px' }}>
+                  <Send size={12} />
                 </button>
               </form>
             </div>
 
           </div>
 
-          {/* Right Column: Metadata & Controls */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Right Column: Metadata Panel */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             
-            {/* Status Selector */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Status</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Status</label>
               <select
                 className="input"
                 value={detail.status}
                 onChange={e => handleStatusChange(e.target.value as TaskStatus)}
-                style={{ marginTop: 4 }}
+                style={{ marginTop: 4, height: 30, fontSize: 12 }}
               >
-                <option value="TODO">TODO</option>
-                <option value="IN_PROGRESS">IN PROGRESS</option>
-                <option value="IN_REVIEW">IN REVIEW</option>
-                <option value="DONE">DONE</option>
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="IN_REVIEW">In Review</option>
+                <option value="DONE">Done</option>
               </select>
             </div>
 
-            {/* Priority Selector */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Priority</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Priority</label>
               <select
                 className="input"
                 value={detail.priority}
                 onChange={e => handlePriorityChange(e.target.value as TaskPriority)}
-                style={{ marginTop: 4 }}
+                style={{ marginTop: 4, height: 30, fontSize: 12 }}
               >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-                <option value="URGENT">URGENT</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
               </select>
             </div>
 
-            {/* Assignee Selector */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Assignee</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Assignee</label>
               <select
                 className="input"
                 value={detail.assignee_id || 'UNASSIGNED'}
                 onChange={e => handleAssigneeChange(e.target.value)}
-                style={{ marginTop: 4 }}
+                style={{ marginTop: 4, height: 30, fontSize: 12 }}
               >
                 <option value="UNASSIGNED">Unassigned</option>
                 {members.map(m => (
@@ -331,11 +328,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </select>
             </div>
 
-            {/* Estimated Hours */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Estimated Hours</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <Clock size={14} color="var(--text-muted)" />
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Estimated Effort</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                 <input
                   type="number"
                   className="input"
@@ -346,31 +341,27 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     onUpdateTask(task.id, { estimated_hours: val });
                   }}
                   step="0.5"
+                  style={{ height: 30, fontSize: 12, width: 80, fontFamily: 'var(--font-mono)' }}
                 />
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>hours</span>
               </div>
             </div>
 
-            {/* Deadline */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Deadline</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <Calendar size={14} color="var(--text-muted)" />
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  {detail.deadline ? new Date(detail.deadline).toLocaleDateString() : 'No deadline set'}
-                </span>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Deadline</label>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
+                {detail.deadline ? new Date(detail.deadline).toLocaleDateString() : 'None set'}
               </div>
             </div>
 
-            {/* Labels */}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Labels</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <Tag size={14} color="var(--text-muted)" />
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{detail.labels || 'None'}</span>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Labels</label>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                {detail.labels || 'None'}
               </div>
             </div>
 
-            <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
               <button
                 onClick={() => {
                   if (confirm('Delete this task?')) {
@@ -381,8 +372,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 className="btn btn-danger btn-sm"
                 style={{ width: '100%' }}
               >
-                <Trash2 size={13} />
-                Delete Task
+                <Trash2 size={12} />
+                <span>Delete Task</span>
               </button>
             </div>
 

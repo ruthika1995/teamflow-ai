@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  FileText, Sparkles, CheckCircle2, CheckSquare, Clock,
-  Calendar, ArrowRight, PlusCircle
+  FileText, Sparkles, CheckCircle2, CheckSquare, Calendar, Plus, Check
 } from 'lucide-react';
 import { Project, Meeting, AIActionItem, AIMeetingSummaryResponse } from '../types';
 import { api } from '../services/api';
@@ -45,7 +44,6 @@ export const AIMeetingView: React.FC<AIMeetingViewProps> = ({
       const res = await api.getMeetings(projectId);
       setPastMeetings(res);
       if (res.length > 0 && !summaryData) {
-        // Load the most recent meeting summary
         const m = res[0];
         try {
           const decisions = m.decisions ? JSON.parse(m.decisions) : [];
@@ -91,7 +89,7 @@ export const AIMeetingView: React.FC<AIMeetingViewProps> = ({
       setCreatingTasks(true);
       const tasksToCreate = summaryData.action_items.map(item => ({
         title: item.task_title,
-        description: `Action item from meeting '${title}'. Assigned to: ${item.assignee_name || 'Team'}. Due: ${item.due_date || 'Sprint 1'}.`,
+        description: `Action item from '${title}'. Assigned to: ${item.assignee_name || 'Team'}. Target due date: ${item.due_date || 'Sprint 1'}.`,
         priority: item.priority || 'MEDIUM',
         estimated_hours: 4.0,
         suggested_role: item.assignee_name || 'Engineering'
@@ -107,165 +105,202 @@ export const AIMeetingView: React.FC<AIMeetingViewProps> = ({
     }
   };
 
+  const getPriorityTagClass = (p: string) => {
+    switch (p) {
+      case 'URGENT': return 'tag-urgent';
+      case 'HIGH': return 'tag-high';
+      case 'MEDIUM': return 'tag-medium';
+      default: return 'tag-low';
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '20px 0', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '16px 0', maxWidth: 1040 }}>
       
       {/* Header */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: 'linear-gradient(135deg, #f59e0b, #f43f5e)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <FileText size={16} color="#fff" />
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>AI Meeting Intelligence</h1>
-        </div>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-          Paste meeting notes or transcripts. AI extracts key decisions, commitments, and converts action items into actual Kanban tasks with 1 click.
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+          Meeting Notes & Action Items
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
+          Document discussions and transcripts. Synthesize key architectural decisions and convert action items into tracked tasks.
         </p>
       </div>
 
-      {/* Input Box */}
-      <div className="glass-panel" style={{ padding: 20, borderRadius: 'var(--radius-lg)' }}>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Meeting Title</label>
-          <input
-            type="text"
-            className="input"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            style={{ marginTop: 4 }}
-          />
-        </div>
-
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Transcript or Raw Notes</label>
-            <button
-              onClick={() => setTranscript(SAMPLE_TRANSCRIPT)}
-              style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: 11, cursor: 'pointer' }}
-            >
-              Load Demo Transcript
-            </button>
-          </div>
-          <textarea
-            className="input"
-            value={transcript}
-            onChange={e => setTranscript(e.target.value)}
-            style={{ minHeight: 120, fontFamily: 'var(--font-mono)', fontSize: 12 }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
-          <button
-            onClick={handleSummarize}
-            disabled={loading || !transcript.trim()}
-            className="btn btn-primary"
-          >
-            <Sparkles size={14} />
-            {loading ? 'Analyzing Transcript...' : 'Summarize & Extract Action Items'}
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Output */}
-      {summaryData && (
-        <div className="glass-panel" style={{ padding: 24, borderRadius: 'var(--radius-lg)' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 16, marginBottom: 20 }}>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Executive Summary</h2>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
-                {summaryData.summary}
-              </p>
-            </div>
-
-            <button
-              onClick={handleConvertActionItemsToTasks}
-              disabled={creatingTasks || tasksCreatedSuccess || !summaryData.action_items.length}
-              className="btn btn-primary"
-            >
-              <CheckCircle2 size={15} />
-              {tasksCreatedSuccess ? 'Tasks Created!' : 'Create Tasks from Action Items'}
-            </button>
+      {/* Editorial 2-Pane Work Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 16 }}>
+        
+        {/* Left Pane: Transcript Input */}
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-md)',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12
+        }}>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+              Meeting Title
+            </label>
+            <input
+              type="text"
+              className="input"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              style={{ marginTop: 4, height: 30, fontSize: 12 }}
+            />
           </div>
 
-          {tasksCreatedSuccess && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)',
-              borderRadius: 8, padding: '10px 14px', marginBottom: 18, color: '#a7f3d0', fontSize: 12, fontWeight: 600
-            }}>
-              ✓ Successfully converted all action items into tasks on the Kanban board!
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+                Transcript / Raw Minutes
+              </label>
+              <button
+                onClick={() => setTranscript(SAMPLE_TRANSCRIPT)}
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: 11, padding: '1px 4px' }}
+              >
+                Insert Sample
+              </button>
             </div>
-          )}
+            <textarea
+              className="input"
+              value={transcript}
+              onChange={e => setTranscript(e.target.value)}
+              style={{ minHeight: 240, flex: 1, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.5 }}
+            />
+          </div>
 
-          {/* Decisions */}
-          {summaryData.decisions.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8 }}>
-                Key Decisions Made:
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {summaryData.decisions.map((dec, idx) => (
-                  <div key={idx} style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-                    background: 'var(--bg-surface-sunken)', borderRadius: 6, border: '1px solid var(--border-subtle)',
-                    fontSize: 13, color: '#fff'
-                  }}>
-                    <span style={{ color: 'var(--color-emerald)', fontWeight: 800 }}>✓</span>
-                    <span>{dec}</span>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={handleSummarize}
+              disabled={loading || !transcript.trim()}
+              className="btn btn-primary btn-sm"
+            >
+              <Sparkles size={13} />
+              <span>{loading ? 'Synthesizing...' : 'Summarize Notes'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Right Pane: Summary Document Output */}
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-md)',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16
+        }}>
+          {summaryData ? (
+            <>
+              {/* Executive Summary */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+                    Executive Summary
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Action Items */}
-          {summaryData.action_items.length > 0 && (
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 8 }}>
-                Action Items ({summaryData.action_items.length}):
+                  <button
+                    onClick={handleConvertActionItemsToTasks}
+                    disabled={creatingTasks || tasksCreatedSuccess || !summaryData.action_items.length}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: 11, padding: '2px 8px' }}
+                  >
+                    <Check size={12} />
+                    <span>{tasksCreatedSuccess ? 'Tasks Converted' : 'Create Tasks'}</span>
+                  </button>
+                </div>
+
+                <div style={{
+                  fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5,
+                  background: 'var(--bg-surface-sunken)', padding: 10, borderRadius: 'var(--radius-xs)',
+                  border: '1px solid var(--border-subtle)'
+                }}>
+                  {summaryData.summary}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {summaryData.action_items.map((item, idx) => (
-                  <div key={idx} style={{
-                    padding: 12, background: 'var(--bg-surface-sunken)', borderRadius: 8,
-                    border: '1px solid var(--border-subtle)', display: 'flex',
-                    alignItems: 'center', justifyContent: 'space-between'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <CheckSquare size={16} color="var(--color-primary)" />
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{item.task_title}</div>
-                        {item.assignee_name && (
-                          <div style={{ fontSize: 11, color: 'var(--color-cyan)', marginTop: 2 }}>
-                            Assignee: {item.assignee_name}
-                          </div>
-                        )}
+
+              {tasksCreatedSuccess && (
+                <div style={{
+                  background: 'var(--status-success-subtle)', border: '1px solid var(--status-success-border)',
+                  borderRadius: 'var(--radius-xs)', padding: '6px 10px', color: '#6ee7b7', fontSize: 11
+                }}>
+                  ✓ Action items converted to active Kanban tasks
+                </div>
+              )}
+
+              {/* Key Decisions */}
+              {summaryData.decisions.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
+                    Decisions ({summaryData.decisions.length}):
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {summaryData.decisions.map((dec, idx) => (
+                      <div key={idx} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 6, padding: '6px 8px',
+                        background: 'var(--bg-surface-sunken)', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-subtle)',
+                        fontSize: 12, color: 'var(--text-primary)'
+                      }}>
+                        <span style={{ color: 'var(--status-success)', fontWeight: 600 }}>✓</span>
+                        <span style={{ lineHeight: 1.4 }}>{dec}</span>
                       </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {item.due_date && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-dim)' }}>
-                          <Calendar size={12} />
-                          <span>{item.due_date}</span>
-                        </div>
-                      )}
-                      <span className={`badge badge-${item.priority.toLowerCase()}`}>
-                        {item.priority}
-                      </span>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Action Items Table */}
+              {summaryData.action_items.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
+                    Action Items ({summaryData.action_items.length}):
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {summaryData.action_items.map((item, idx) => (
+                      <div key={idx} style={{
+                        padding: '6px 8px', background: 'var(--bg-surface-sunken)', borderRadius: 'var(--radius-xs)',
+                        border: '1px solid var(--border-subtle)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'space-between'
+                      }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>{item.task_title}</div>
+                          {item.assignee_name && (
+                            <div style={{ fontSize: 11, color: 'var(--color-accent)', marginTop: 1, fontFamily: 'var(--font-mono)' }}>
+                              @{item.assignee_name}
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {item.due_date && (
+                            <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                              {item.due_date}
+                            </span>
+                          )}
+                          <span className={`tag ${getPriorityTagClass(item.priority)}`} style={{ fontSize: 9 }}>
+                            {item.priority}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-dim)', fontSize: 12 }}>
+              Paste transcript and click Summarize Notes
             </div>
           )}
-
         </div>
-      )}
+
+      </div>
 
     </div>
   );

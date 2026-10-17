@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
   Plus, Search, Filter, Clock, MessageSquare, ChevronRight,
-  ChevronLeft, Sparkles, CheckCircle2, User, ArrowRight
+  ChevronLeft, Sparkles, User
 } from 'lucide-react';
-import { Task, TaskStatus, TaskPriority, WorkspaceMember } from '../types';
+import { Task, TaskStatus, WorkspaceMember } from '../types';
 
 interface KanbanBoardViewProps {
   tasks: Task[];
@@ -14,11 +14,11 @@ interface KanbanBoardViewProps {
   onOpenAIPlannerModal: () => void;
 }
 
-const COLUMNS: { id: TaskStatus; title: string; color: string; lightBg: string }[] = [
-  { id: 'TODO', title: 'TODO', color: '#94a3b8', lightBg: 'rgba(148, 163, 184, 0.08)' },
-  { id: 'IN_PROGRESS', title: 'IN PROGRESS', color: '#38bdf8', lightBg: 'rgba(56, 189, 248, 0.08)' },
-  { id: 'IN_REVIEW', title: 'IN REVIEW', color: '#c084fc', lightBg: 'rgba(192, 132, 252, 0.08)' },
-  { id: 'DONE', title: 'DONE', color: '#34d399', lightBg: 'rgba(52, 211, 153, 0.08)' },
+const COLUMNS: { id: TaskStatus; title: string; tagClass: string }[] = [
+  { id: 'TODO', title: 'To Do', tagClass: 'tag-todo' },
+  { id: 'IN_PROGRESS', title: 'In Progress', tagClass: 'tag-in_progress' },
+  { id: 'IN_REVIEW', title: 'In Review', tagClass: 'tag-in_review' },
+  { id: 'DONE', title: 'Done', tagClass: 'tag-done' },
 ];
 
 export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
@@ -33,7 +33,6 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('ALL');
 
-  // Filter tasks
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (task.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,81 +62,87 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
     }
   };
 
+  const getPriorityTagClass = (p: string) => {
+    switch (p) {
+      case 'URGENT': return 'tag-urgent';
+      case 'HIGH': return 'tag-high';
+      case 'MEDIUM': return 'tag-medium';
+      default: return 'tag-low';
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '20px 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px 0' }}>
       
-      {/* Control bar: search, filters, actions */}
+      {/* Restrained Toolbar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: 12, background: 'var(--bg-surface)', padding: 14,
-        borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)'
+        flexWrap: 'wrap', gap: 10
       }}>
         
         {/* Left: Search & Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flex: 1 }}>
-          <div style={{ position: 'relative', minWidth: 220 }}>
-            <Search size={14} color="var(--text-dim)" style={{ position: 'absolute', left: 10, top: 11 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: 220 }}>
+            <Search size={13} color="var(--text-dim)" style={{ position: 'absolute', left: 8, top: 8 }} />
             <input
               type="text"
-              placeholder="Search tasks, labels..."
+              placeholder="Filter tasks..."
               className="input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: 30 }}
+              style={{ paddingLeft: 26, height: 30, fontSize: 12 }}
             />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Filter size={13} color="var(--text-muted)" />
             <select
               className="input"
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              style={{ width: 130 }}
+              style={{ width: 110, height: 30, fontSize: 12, padding: '4px 8px' }}
             >
-              <option value="ALL">All Priorities</option>
+              <option value="ALL">Priority: All</option>
               <option value="URGENT">Urgent</option>
               <option value="HIGH">High</option>
               <option value="MEDIUM">Medium</option>
               <option value="LOW">Low</option>
             </select>
-          </div>
 
-          <select
-            className="input"
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-            style={{ width: 150 }}
-          >
-            <option value="ALL">All Members</option>
-            {members.map(m => (
-              <option key={m.user_id} value={m.user_id}>{m.user.full_name}</option>
-            ))}
-          </select>
+            <select
+              className="input"
+              value={assigneeFilter}
+              onChange={(e) => setAssigneeFilter(e.target.value)}
+              style={{ width: 130, height: 30, fontSize: 12, padding: '4px 8px' }}
+            >
+              <option value="ALL">Assignee: All</option>
+              {members.map(m => (
+                <option key={m.user_id} value={m.user_id}>{m.user.full_name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Right: AI Planner & New Task buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Right: AI Planner & New Task */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={onOpenAIPlannerModal}
             className="btn btn-secondary btn-sm"
-            style={{ border: '1px solid rgba(99, 102, 241, 0.4)', color: '#a5b4fc' }}
           >
-            <Sparkles size={14} color="#818cf8" />
-            AI Project Planner
+            <Sparkles size={13} color="var(--color-accent)" />
+            <span>AI Plan</span>
           </button>
 
           <button onClick={() => onOpenCreateTaskModal('TODO')} className="btn btn-primary btn-sm">
-            <Plus size={14} />
-            Add Task
+            <Plus size={13} />
+            <span>New Task</span>
           </button>
         </div>
 
       </div>
 
-      {/* Kanban Columns Horizontal Canvas */}
+      {/* Kanban Columns Horizontal Layout */}
       <div style={{
-        display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16,
+        display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 16,
         alignItems: 'flex-start'
       }}>
         {COLUMNS.map(column => {
@@ -148,18 +153,17 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
               
               {/* Column Header */}
               <div style={{
-                padding: '14px 16px', display: 'flex', alignItems: 'center',
-                justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)',
-                background: column.lightBg, borderTopLeftRadius: 'var(--radius-lg)', borderTopRightRadius: 'var(--radius-lg)'
+                padding: '10px 12px', display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: column.color }} />
-                  <span style={{ fontWeight: 800, fontSize: 13, color: '#fff', letterSpacing: '0.02em' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>
                     {column.title}
                   </span>
                   <span style={{
-                    fontSize: 11, fontWeight: 700, padding: '1px 7px',
-                    borderRadius: 10, background: 'rgba(0,0,0,0.3)', color: column.color
+                    fontSize: 11, fontWeight: 500, padding: '1px 5px',
+                    borderRadius: 'var(--radius-xs)', background: 'var(--bg-surface-raised)',
+                    color: 'var(--text-muted)', fontFamily: 'var(--font-mono)'
                   }}>
                     {columnTasks.length}
                   </span>
@@ -168,24 +172,24 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
                 <button
                   onClick={() => onOpenCreateTaskModal(column.id)}
                   style={{
-                    background: 'none', border: 'none', color: 'var(--text-muted)',
-                    cursor: 'pointer', padding: 2, display: 'flex'
+                    background: 'none', border: 'none', color: 'var(--text-dim)',
+                    cursor: 'pointer', padding: 2, display: 'flex', borderRadius: 'var(--radius-xs)'
                   }}
                   title={`Add to ${column.title}`}
                 >
-                  <Plus size={16} />
+                  <Plus size={14} />
                 </button>
               </div>
 
               {/* Tasks List */}
-              <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minHeight: 300 }}>
+              <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 320 }}>
                 {columnTasks.length === 0 ? (
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flex: 1, color: 'var(--text-dim)', fontSize: 12, fontStyle: 'italic',
-                    minHeight: 120, border: '1px dashed var(--border-subtle)', borderRadius: 8
+                    flex: 1, color: 'var(--text-dim)', fontSize: 12,
+                    minHeight: 100, border: '1px dashed var(--border-subtle)', borderRadius: 'var(--radius-sm)'
                   }}>
-                    No tasks in {column.title}
+                    No tasks
                   </div>
                 ) : (
                   columnTasks.map(task => (
@@ -194,20 +198,20 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
                       className="kanban-task-card"
                       onClick={() => onTaskClick(task)}
                     >
-                      {/* Top labels & priority */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span className={`badge badge-${task.priority.toLowerCase()}`}>
+                      {/* Priority & Estimate */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span className={`tag ${getPriorityTagClass(task.priority)}`}>
                           {task.priority}
                         </span>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-dim)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
                           <Clock size={11} />
                           <span>{task.estimated_hours}h</span>
                         </div>
                       </div>
 
                       {/* Title */}
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.4, marginBottom: 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: 4 }}>
                         {task.title}
                       </div>
 
@@ -215,7 +219,7 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
                       {task.description && (
                         <div style={{
                           fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4,
-                          marginBottom: 10, display: '-webkit-box', WebkitLineClamp: 2,
+                          marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical', overflow: 'hidden'
                         }}>
                           {task.description}
@@ -224,12 +228,13 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
 
                       {/* Labels tag */}
                       {task.labels && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 8 }}>
                           {task.labels.split(',').map((label, idx) => (
                             <span key={idx} style={{
-                              fontSize: 10, fontWeight: 600, padding: '2px 6px',
-                              borderRadius: 4, background: 'var(--bg-surface-sunken)',
-                              color: 'var(--text-dim)', border: '1px solid var(--border-subtle)'
+                              fontSize: 10, padding: '1px 5px',
+                              borderRadius: 'var(--radius-xs)', background: 'var(--bg-surface-sunken)',
+                              color: 'var(--text-muted)', border: '1px solid var(--border-subtle)',
+                              fontFamily: 'var(--font-mono)'
                             }}>
                               {label.trim()}
                             </span>
@@ -237,58 +242,57 @@ export const KanbanBoardView: React.FC<KanbanBoardViewProps> = ({
                         </div>
                       )}
 
-                      {/* Footer: Assignee, Comments & Quick Move Arrows */}
+                      {/* Footer: Assignee, Comments & Move controls */}
                       <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        paddingTop: 8, borderTop: '1px solid var(--border-subtle)', marginTop: 4
+                        paddingTop: 6, borderTop: '1px solid var(--border-subtle)'
                       }}>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           {task.assignee ? (
                             <img
                               src={task.assignee.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
                               alt={task.assignee.full_name}
-                              title={`Assigned to ${task.assignee.full_name}`}
-                              style={{ width: 22, height: 22, borderRadius: '50%' }}
+                              title={task.assignee.full_name}
+                              style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }}
                             />
                           ) : (
                             <div style={{
-                              width: 22, height: 22, borderRadius: '50%',
-                              background: 'var(--bg-surface-sunken)', display: 'flex',
+                              width: 18, height: 18, borderRadius: '50%',
+                              background: 'var(--bg-surface-raised)', display: 'flex',
                               alignItems: 'center', justifyContent: 'center'
                             }}>
-                              <User size={12} color="var(--text-dim)" />
+                              <User size={10} color="var(--text-dim)" />
                             </div>
                           )}
 
                           {task.comments_count > 0 && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--text-dim)' }}>
-                              <MessageSquare size={11} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                              <MessageSquare size={10} />
                               <span>{task.comments_count}</span>
                             </div>
                           )}
                         </div>
 
-                        {/* Quick Status Shift Controls */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+                        {/* Shift Controls */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }} onClick={(e) => e.stopPropagation()}>
                           {getPrevStatus(task.status) && (
                             <button
                               onClick={() => onMoveTask(task.id, getPrevStatus(task.status)!)}
-                              className="btn btn-outline"
-                              style={{ width: 22, height: 22, padding: 0, borderRadius: 4 }}
-                              title={`Move back to ${getPrevStatus(task.status)}`}
+                              className="btn btn-ghost"
+                              style={{ width: 20, height: 20, padding: 0 }}
+                              title={`Move to ${getPrevStatus(task.status)}`}
                             >
-                              <ChevronLeft size={13} />
+                              <ChevronLeft size={12} />
                             </button>
                           )}
                           {getNextStatus(task.status) && (
                             <button
                               onClick={() => onMoveTask(task.id, getNextStatus(task.status)!)}
-                              className="btn btn-primary"
-                              style={{ width: 22, height: 22, padding: 0, borderRadius: 4 }}
+                              className="btn btn-ghost"
+                              style={{ width: 20, height: 20, padding: 0 }}
                               title={`Advance to ${getNextStatus(task.status)}`}
                             >
-                              <ChevronRight size={13} />
+                              <ChevronRight size={12} />
                             </button>
                           )}
                         </div>

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  BarChart3, Kanban, Sparkles, Calendar, FileText,
-  MessageSquare, Search, Plus, Layers, AlertCircle
+  Kanban, BarChart3, Sparkles, Calendar, FileText,
+  MessageSquare, Search
 } from 'lucide-react';
 import {
   User, Workspace, WorkspaceMember, Project, Task,
@@ -33,7 +33,7 @@ export const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   
-  type TabType = 'dashboard' | 'kanban' | 'ai-planner' | 'sprint-planner' | 'meetings' | 'chat' | 'copilot';
+  type TabType = 'kanban' | 'dashboard' | 'ai-planner' | 'sprint-planner' | 'meetings' | 'chat' | 'copilot';
   const [activeTab, setActiveTab] = useState<TabType>('kanban');
 
   // Modals state
@@ -51,7 +51,6 @@ export const App: React.FC = () => {
     currentUser?.id || null
   );
 
-  // 1. Initial Load: Demo users, Current User, Workspaces
   useEffect(() => {
     initApp();
   }, []);
@@ -65,7 +64,6 @@ export const App: React.FC = () => {
       try {
         me = await api.getMe();
       } catch {
-        // Fallback login as Ruthi (Lead) by default
         const loginRes = await api.login('ruthi@teamflow.ai', 'password123');
         me = loginRes.user;
       }
@@ -125,7 +123,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // 2. React to Real-Time WebSocket Events
+  // React to Real-Time WebSocket Events
   useEffect(() => {
     if (!lastEvent) return;
 
@@ -153,7 +151,6 @@ export const App: React.FC = () => {
     } else if (type === 'NEW_CHAT_MESSAGE') {
       setIncomingChatMessage(data);
     } else if (type === 'NEW_COMMENT') {
-      // Reload task comments if modal open
       if (selectedTask && selectedTask.id === data.task_id) {
         setSelectedTask(prev => prev ? {
           ...prev,
@@ -164,7 +161,6 @@ export const App: React.FC = () => {
     }
   }, [lastEvent, currentProject?.id, selectedTask?.id]);
 
-  // Handler: Switch identity to test RBAC roles
   const handleSwitchUser = async (userId: string) => {
     try {
       const res = await api.switchUser(userId);
@@ -175,19 +171,16 @@ export const App: React.FC = () => {
     }
   };
 
-  // Handler: Select workspace
   const handleSelectWorkspace = (ws: Workspace) => {
     setCurrentWorkspace(ws);
     loadWorkspaceDetails(ws.id);
   };
 
-  // Handler: Select project
   const handleSelectProject = (project: Project) => {
     setCurrentProject(project);
     loadTasks(project.id);
   };
 
-  // Handler: Move task (optimistic + API)
   const handleMoveTask = async (taskId: string, newStatus: TaskStatus) => {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
     try {
@@ -219,7 +212,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-canvas)' }}>
       
       {/* Top Global Navigation Bar */}
       <Navbar
@@ -243,126 +236,167 @@ export const App: React.FC = () => {
         onCreateProjectClick={() => setCreateProjectModalOpen(true)}
       />
 
-      {/* Workspace Tabs Navigation */}
+      {/* Workspace Subheader & Tab Navigation */}
       <div style={{
-        background: 'var(--bg-surface-sunken)', borderBottom: '1px solid var(--border-subtle)',
-        padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        background: 'var(--bg-canvas)',
+        borderBottom: '1px solid var(--border-subtle)',
+        padding: '0 16px'
       }}>
-        <div style={{ display: 'flex', gap: 4, maxWidth: 1440, margin: '0 auto', width: '100%', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: 2, maxWidth: 1440, margin: '0 auto', width: '100%', overflowX: 'auto' }}>
           
           <button
             onClick={() => setActiveTab('kanban')}
-            className="btn btn-outline"
             style={{
-              borderRadius: 0, padding: '12px 18px', border: 'none',
-              borderBottom: activeTab === 'kanban' ? '2px solid var(--color-primary)' : '2px solid transparent',
-              color: activeTab === 'kanban' ? '#fff' : 'var(--text-muted)',
-              fontWeight: activeTab === 'kanban' ? 700 : 500,
-              fontSize: 13
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'kanban' ? '2px solid var(--color-accent)' : '2px solid transparent',
+              color: activeTab === 'kanban' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 500,
+              fontSize: 13,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            <Kanban size={15} />
-            <span>Kanban Board</span>
-            <span style={{ fontSize: 11, background: 'rgba(255,255,255,0.1)', padding: '1px 6px', borderRadius: 10 }}>
+            <Kanban size={14} />
+            <span>Board</span>
+            <span style={{
+              fontSize: 11,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--text-dim)',
+              marginLeft: 2
+            }}>
               {tasks.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab('dashboard')}
-            className="btn btn-outline"
             style={{
-              borderRadius: 0, padding: '12px 18px', border: 'none',
-              borderBottom: activeTab === 'dashboard' ? '2px solid var(--color-primary)' : '2px solid transparent',
-              color: activeTab === 'dashboard' ? '#fff' : 'var(--text-muted)',
-              fontWeight: activeTab === 'dashboard' ? 700 : 500,
-              fontSize: 13
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'dashboard' ? '2px solid var(--color-accent)' : '2px solid transparent',
+              color: activeTab === 'dashboard' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 500,
+              fontSize: 13,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            <BarChart3 size={15} />
-            <span>Dashboard & Risks</span>
+            <BarChart3 size={14} />
+            <span>Overview & Risks</span>
           </button>
 
           <button
             onClick={() => setActiveTab('ai-planner')}
-            className="btn btn-outline"
             style={{
-              borderRadius: 0, padding: '12px 18px', border: 'none',
-              borderBottom: activeTab === 'ai-planner' ? '2px solid var(--color-primary)' : '2px solid transparent',
-              color: activeTab === 'ai-planner' ? '#818cf8' : 'var(--text-muted)',
-              fontWeight: activeTab === 'ai-planner' ? 700 : 500,
-              fontSize: 13
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'ai-planner' ? '2px solid var(--color-accent)' : '2px solid transparent',
+              color: activeTab === 'ai-planner' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 500,
+              fontSize: 13,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            <Sparkles size={15} color="#818cf8" />
-            <span>AI Project Planner</span>
+            <Sparkles size={14} />
+            <span>Project Plan</span>
           </button>
 
           <button
             onClick={() => setActiveTab('sprint-planner')}
-            className="btn btn-outline"
             style={{
-              borderRadius: 0, padding: '12px 18px', border: 'none',
-              borderBottom: activeTab === 'sprint-planner' ? '2px solid var(--color-primary)' : '2px solid transparent',
-              color: activeTab === 'sprint-planner' ? '#34d399' : 'var(--text-muted)',
-              fontWeight: activeTab === 'sprint-planner' ? 700 : 500,
-              fontSize: 13
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'sprint-planner' ? '2px solid var(--color-accent)' : '2px solid transparent',
+              color: activeTab === 'sprint-planner' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 500,
+              fontSize: 13,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            <Calendar size={15} />
-            <span>AI Sprint Planner</span>
+            <Calendar size={14} />
+            <span>Sprint Schedule</span>
           </button>
 
           <button
             onClick={() => setActiveTab('meetings')}
-            className="btn btn-outline"
             style={{
-              borderRadius: 0, padding: '12px 18px', border: 'none',
-              borderBottom: activeTab === 'meetings' ? '2px solid var(--color-primary)' : '2px solid transparent',
-              color: activeTab === 'meetings' ? '#f59e0b' : 'var(--text-muted)',
-              fontWeight: activeTab === 'meetings' ? 700 : 500,
-              fontSize: 13
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'meetings' ? '2px solid var(--color-accent)' : '2px solid transparent',
+              color: activeTab === 'meetings' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 500,
+              fontSize: 13,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            <FileText size={15} />
-            <span>Meeting Summarizer</span>
+            <FileText size={14} />
+            <span>Meeting Notes</span>
           </button>
 
           <button
             onClick={() => setActiveTab('chat')}
-            className="btn btn-outline"
             style={{
-              borderRadius: 0, padding: '12px 18px', border: 'none',
-              borderBottom: activeTab === 'chat' ? '2px solid var(--color-primary)' : '2px solid transparent',
-              color: activeTab === 'chat' ? '#38bdf8' : 'var(--text-muted)',
-              fontWeight: activeTab === 'chat' ? 700 : 500,
-              fontSize: 13
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'chat' ? '2px solid var(--color-accent)' : '2px solid transparent',
+              color: activeTab === 'chat' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 500,
+              fontSize: 13,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            <MessageSquare size={15} />
+            <MessageSquare size={14} />
             <span>Team Chat</span>
           </button>
 
           <button
             onClick={() => setActiveTab('copilot')}
-            className="btn btn-outline"
             style={{
-              borderRadius: 0, padding: '12px 18px', border: 'none',
-              borderBottom: activeTab === 'copilot' ? '2px solid var(--color-primary)' : '2px solid transparent',
-              color: activeTab === 'copilot' ? '#c084fc' : 'var(--text-muted)',
-              fontWeight: activeTab === 'copilot' ? 700 : 500,
-              fontSize: 13
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'copilot' ? '2px solid var(--color-accent)' : '2px solid transparent',
+              color: activeTab === 'copilot' ? 'var(--text-primary)' : 'var(--text-muted)',
+              fontWeight: 500,
+              fontSize: 13,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
             }}
           >
-            <Search size={15} />
-            <span>AI Assistant & Q&A</span>
+            <Search size={14} />
+            <span>Search & Assistant</span>
           </button>
 
         </div>
       </div>
 
       {/* Main Container */}
-      <main style={{ flex: 1, padding: '0 24px', maxWidth: 1440, margin: '0 auto', width: '100%' }}>
+      <main style={{ flex: 1, padding: '0 16px', maxWidth: 1440, margin: '0 auto', width: '100%' }}>
         
         {activeTab === 'kanban' && (
           <KanbanBoardView

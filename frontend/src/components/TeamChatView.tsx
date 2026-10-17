@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  MessageSquare, Send, Users, Sparkles, Hash, Circle
+  Send, Hash
 } from 'lucide-react';
 import { Workspace, Project, User, ChatMessage } from '../types';
 import { api } from '../services/api';
@@ -31,7 +31,6 @@ export const TeamChatView: React.FC<TeamChatViewProps> = ({
     }
   }, [currentWorkspace?.id, currentProject?.id]);
 
-  // When a new message arrives over WebSocket, append to stream if not already present
   useEffect(() => {
     if (incomingMessage) {
       setMessages(prev => {
@@ -55,7 +54,7 @@ export const TeamChatView: React.FC<TeamChatViewProps> = ({
   const scrollToBottom = () => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
+    }, 40);
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -78,83 +77,78 @@ export const TeamChatView: React.FC<TeamChatViewProps> = ({
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', height: 'calc(100vh - 180px)',
-      minHeight: 550, maxWidth: 960, margin: '20px auto 0 auto',
-      background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+      display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)',
+      minHeight: 520, maxWidth: 960, margin: '16px auto 0 auto',
+      background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)',
       border: '1px solid var(--border-subtle)', overflow: 'hidden'
     }}>
       
-      {/* Chat Room Header */}
+      {/* Quiet Header */}
       <div style={{
-        padding: '14px 20px', borderBottom: '1px solid var(--border-subtle)',
+        padding: '10px 16px', borderBottom: '1px solid var(--border-subtle)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'var(--bg-surface-sunken)'
+        background: 'var(--bg-canvas)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 6,
-            background: 'rgba(99, 102, 241, 0.15)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center'
-          }}>
-            <Hash size={16} color="var(--color-primary)" />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
-              # general • {currentWorkspace?.name}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-              Real-time collaboration and team discussions
-            </div>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Hash size={14} color="var(--text-muted)" />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+            general
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>
+            — {currentWorkspace?.name}
+          </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: wsConnected ? 'var(--color-emerald)' : 'var(--text-dim)' }}>
-          <span className={wsConnected ? 'live-indicator' : ''} style={!wsConnected ? { width: 8, height: 8, borderRadius: '50%', background: '#64748b' } : {}} />
-          <span style={{ fontWeight: 600 }}>{wsConnected ? 'Connected via WebSocket' : 'Connecting...'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-muted)' }}>
+          <span className={wsConnected ? 'live-dot' : ''} style={!wsConnected ? { width: 6, height: 6, borderRadius: '50%', background: 'var(--text-dim)' } : {}} />
+          <span>{wsConnected ? 'Connected' : 'Connecting...'}</span>
         </div>
       </div>
 
-      {/* Messages Stream */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Clean Linear Message Stream (No bubbly rounded bubbles) */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {messages.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-dim)', margin: 'auto', fontSize: 13 }}>
-            No messages yet. Send a message to start real-time chat with the team!
+          <div style={{ textAlign: 'center', color: 'var(--text-dim)', margin: 'auto', fontSize: 12 }}>
+            No messages in #general yet.
           </div>
         ) : (
-          messages.map(msg => {
+          messages.map((msg, idx) => {
             const isMe = msg.user_id === currentUser?.id;
+            const prevMsg = idx > 0 ? messages[idx - 1] : null;
+            const isSameSender = prevMsg && prevMsg.user_id === msg.user_id;
+
             return (
               <div
                 key={msg.id}
+                className="chat-row"
                 style={{
-                  display: 'flex', gap: 10,
-                  alignSelf: isMe ? 'flex-end' : 'flex-start',
-                  maxWidth: '75%',
-                  flexDirection: isMe ? 'row-reverse' : 'row'
+                  paddingTop: isSameSender ? 2 : 8,
+                  paddingBottom: 2
                 }}
               >
-                <img
-                  src={msg.user?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
-                  alt={msg.user?.full_name}
-                  style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }}
-                />
+                {!isSameSender ? (
+                  <img
+                    src={msg.user?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
+                    alt={msg.user?.full_name}
+                    style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, marginTop: 2 }}
+                  />
+                ) : (
+                  <div style={{ width: 26, flexShrink: 0 }} />
+                )}
 
-                <div>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2,
-                    justifyContent: isMe ? 'flex-end' : 'flex-start'
-                  }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>
-                      {isMe ? 'You' : msg.user?.full_name}
-                    </span>
-                    <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
+                <div style={{ flex: 1 }}>
+                  {!isSameSender && (
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: isMe ? 'var(--color-accent)' : 'var(--text-primary)' }}>
+                        {isMe ? 'You' : msg.user?.full_name}
+                      </span>
+                      <span style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  )}
 
-                  <div className={isMe ? 'chat-bubble-user' : 'chat-bubble-peer'} style={{
-                    padding: '10px 14px', fontSize: 13, color: '#fff', lineHeight: 1.4
-                  }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                     {msg.content}
                   </div>
                 </div>
@@ -165,27 +159,27 @@ export const TeamChatView: React.FC<TeamChatViewProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Send Input Box */}
+      {/* Input Field */}
       <form onSubmit={handleSend} style={{
-        padding: 14, borderTop: '1px solid var(--border-subtle)',
-        background: 'var(--bg-surface-sunken)', display: 'flex', gap: 10
+        padding: '10px 14px', borderTop: '1px solid var(--border-subtle)',
+        background: 'var(--bg-canvas)', display: 'flex', gap: 8
       }}>
         <input
           type="text"
           className="input"
-          placeholder="Message teammates in real-time... (Press Enter to send)"
+          placeholder="Message #general... (Press Enter to send)"
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           disabled={!currentWorkspace}
-          style={{ flex: 1 }}
+          style={{ height: 32, fontSize: 12 }}
         />
         <button
           type="submit"
-          className="btn btn-primary"
+          className="btn btn-secondary btn-sm"
           disabled={sending || !inputText.trim()}
-          style={{ padding: '0 16px' }}
+          style={{ height: 32, padding: '0 12px' }}
         >
-          <Send size={15} />
+          <Send size={12} />
         </button>
       </form>
 

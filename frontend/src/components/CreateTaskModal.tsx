@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Clock, Tag } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { Project, WorkspaceMember, TaskStatus, TaskPriority } from '../types';
 import { api } from '../services/api';
 
@@ -54,19 +54,19 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 540, padding: 24 }}>
+      <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, padding: 20 }}>
         
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Create New Task</h2>
-          <button onClick={onClose} className="btn btn-outline" style={{ width: 30, height: 30, padding: 0 }}>
-            <X size={15} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>New Task</h2>
+          <button onClick={onClose} className="btn btn-ghost" style={{ width: 24, height: 24, padding: 0 }}>
+            <X size={14} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Task Title *</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Title *</label>
             <input
               type="text"
               required
@@ -74,47 +74,47 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               className="input"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              style={{ marginTop: 4 }}
+              style={{ marginTop: 4, height: 32 }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Description</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Description</label>
             <textarea
               placeholder="Context, requirements, and acceptance criteria..."
               className="input"
               value={description}
               onChange={e => setDescription(e.target.value)}
-              style={{ marginTop: 4, minHeight: 70 }}
+              style={{ marginTop: 4, minHeight: 60 }}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Status</label>
-              <select className="input" value={status} onChange={e => setStatus(e.target.value as TaskStatus)} style={{ marginTop: 4 }}>
-                <option value="TODO">TODO</option>
-                <option value="IN_PROGRESS">IN PROGRESS</option>
-                <option value="IN_REVIEW">IN REVIEW</option>
-                <option value="DONE">DONE</option>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Status</label>
+              <select className="input" value={status} onChange={e => setStatus(e.target.value as TaskStatus)} style={{ marginTop: 4, height: 30 }}>
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="IN_REVIEW">In Review</option>
+                <option value="DONE">Done</option>
               </select>
             </div>
 
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Priority</label>
-              <select className="input" value={priority} onChange={e => setPriority(e.target.value as TaskPriority)} style={{ marginTop: 4 }}>
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-                <option value="URGENT">URGENT</option>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Priority</label>
+              <select className="input" value={priority} onChange={e => setPriority(e.target.value as TaskPriority)} style={{ marginTop: 4, height: 30 }}>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
               </select>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Assignee</label>
-              <select className="input" value={assigneeId} onChange={e => setAssigneeId(e.target.value)} style={{ marginTop: 4 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Assignee</label>
+              <select className="input" value={assigneeId} onChange={e => setAssigneeId(e.target.value)} style={{ marginTop: 4, height: 30 }}>
                 <option value="">Unassigned</option>
                 {members.map(m => (
                   <option key={m.user_id} value={m.user_id}>{m.user.full_name}</option>
@@ -123,37 +123,37 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </div>
 
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Estimated Hours</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Estimated Effort (hours)</label>
               <input
                 type="number"
                 step="0.5"
                 className="input"
                 value={estimatedHours}
                 onChange={e => setEstimatedHours(parseFloat(e.target.value) || 0)}
-                style={{ marginTop: 4 }}
+                style={{ marginTop: 4, height: 30, fontFamily: 'var(--font-mono)' }}
               />
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Labels (comma separated)</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Labels (comma separated)</label>
             <input
               type="text"
-              placeholder="e.g. Backend, Auth, High-Priority"
+              placeholder="e.g. backend, security"
               className="input"
               value={labels}
               onChange={e => setLabels(e.target.value)}
-              style={{ marginTop: 4 }}
+              style={{ marginTop: 4, height: 30 }}
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
-            <button type="button" onClick={onClose} className="btn btn-outline">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">
               Cancel
             </button>
-            <button type="submit" disabled={loading || !title.trim()} className="btn btn-primary">
-              <Plus size={14} />
-              {loading ? 'Creating...' : 'Create Task'}
+            <button type="submit" disabled={loading || !title.trim()} className="btn btn-primary btn-sm">
+              <Plus size={13} />
+              <span>{loading ? 'Creating...' : 'Create Task'}</span>
             </button>
           </div>
 

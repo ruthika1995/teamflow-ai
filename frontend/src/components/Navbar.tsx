@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Layers, Users, Bell, Activity, Sparkles, CheckCheck,
-  ChevronDown, UserCheck, Shield
+  Layers, Users, Bell, CheckCheck,
+  ChevronDown, UserCheck, Shield, Plus
 } from 'lucide-react';
 import { User, Workspace, WorkspaceMember, NotificationItem } from '../types';
 
@@ -40,7 +40,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Determine current user's role in this workspace
   const currentMember = members.find(m => m.user_id === currentUser?.id);
   const userRole = currentMember?.role || 'MEMBER';
 
@@ -54,49 +53,65 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="glass-panel" style={{ position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid var(--border-subtle)', padding: '10px 24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 1440, margin: '0 auto' }}>
+    <header style={{
+      background: 'var(--bg-canvas)',
+      borderBottom: '1px solid var(--border-subtle)',
+      padding: '0 16px',
+      height: 48,
+      display: 'flex',
+      alignItems: 'center',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 1440, margin: '0 auto' }}>
         
-        {/* Left: Brand + Workspace Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+        {/* Left: Brand + Breadcrumb Workspace */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{
-              width: 34, height: 34, borderRadius: 8,
-              background: 'linear-gradient(135deg, #6366f1, #38bdf8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 10px rgba(99, 102, 241, 0.4)'
+              width: 22, height: 22, borderRadius: 'var(--radius-xs)',
+              background: 'var(--bg-surface-raised)',
+              border: '1px solid var(--border-medium)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-              <Layers size={18} color="#fff" />
+              <Layers size={13} color="var(--text-secondary)" />
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em', color: '#fff' }}>TeamFlow</span>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8', borderRadius: 4 }}>AI</span>
-              </div>
-            </div>
+            <span style={{ fontWeight: 600, fontSize: 13, letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>
+              TeamFlow
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: '1px 4px',
+              background: 'var(--color-accent-subtle)', color: 'var(--color-accent)',
+              border: '1px solid var(--color-accent-border)',
+              borderRadius: 'var(--radius-xs)',
+              fontFamily: 'var(--font-mono)'
+            }}>
+              AI
+            </span>
           </div>
 
-          <div style={{ height: 24, width: 1, background: 'var(--border-subtle)' }} />
+          <span style={{ color: 'var(--border-strong)', fontSize: 13 }}>/</span>
 
-          {/* Workspace dropdown */}
+          {/* Workspace dropdown button */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowWorkspaceDropdown(!showWorkspaceDropdown)}
-              className="btn btn-secondary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '3px 6px', fontWeight: 500, fontSize: 13 }}
             >
-              <Users size={14} color="var(--text-muted)" />
-              <span style={{ fontWeight: 600 }}>{currentWorkspace?.name || 'Workspace'}</span>
-              <ChevronDown size={14} color="var(--text-muted)" />
+              <span>{currentWorkspace?.name || 'Workspace'}</span>
+              <ChevronDown size={13} color="var(--text-muted)" />
             </button>
 
             {showWorkspaceDropdown && (
-              <div className="glass-panel" style={{
-                position: 'absolute', top: '100%', left: 0, marginTop: 6, width: 220,
-                borderRadius: 8, padding: 6, boxShadow: 'var(--shadow-lg)', zIndex: 110,
-                background: 'var(--bg-surface)'
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, marginTop: 4, width: 220,
+                borderRadius: 'var(--radius-sm)', padding: 4, boxShadow: 'var(--shadow-overlay)',
+                zIndex: 110, background: 'var(--bg-surface)', border: '1px solid var(--border-medium)'
               }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', padding: '4px 8px', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', padding: '4px 8px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
                   Workspaces
                 </div>
                 {workspaces.map(ws => (
@@ -107,13 +122,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                       setShowWorkspaceDropdown(false);
                     }}
                     style={{
-                      padding: '8px 10px', borderRadius: 6, cursor: 'pointer',
-                      fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      background: ws.id === currentWorkspace?.id ? 'var(--bg-surface-highlight)' : 'transparent'
+                      padding: '6px 8px', borderRadius: 'var(--radius-xs)', cursor: 'pointer',
+                      fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      background: ws.id === currentWorkspace?.id ? 'var(--bg-surface-hover)' : 'transparent',
+                      color: ws.id === currentWorkspace?.id ? 'var(--text-primary)' : 'var(--text-secondary)'
                     }}
                   >
                     <span>{ws.name}</span>
-                    {ws.id === currentWorkspace?.id && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-primary)' }} />}
+                    {ws.id === currentWorkspace?.id && <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--color-accent)' }} />}
                   </div>
                 ))}
               </div>
@@ -121,46 +137,42 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* User's Role Badge */}
-          <div className={`role-badge ${getRoleClass(userRole)}`} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Shield size={11} />
-            <span>{userRole}</span>
-          </div>
+          <span className={`role-tag ${getRoleClass(userRole)}`}>
+            {userRole}
+          </span>
 
-          {/* WebSocket Status Indicator */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'rgba(16, 185, 129, 0.08)', padding: '3px 8px', borderRadius: 20,
-            border: '1px solid rgba(16, 185, 129, 0.2)'
-          }}>
-            <span className={wsConnected ? 'live-indicator' : ''} style={!wsConnected ? { width: 8, height: 8, borderRadius: '50%', background: '#64748b' } : {}} />
-            <span style={{ fontSize: 11, fontWeight: 600, color: wsConnected ? '#34d399' : '#94a3b8' }}>
-              {wsConnected ? 'LIVE SYNC' : 'OFFLINE'}
+          {/* Subtle Live Connection State */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '2px 6px' }}>
+            <span className={wsConnected ? 'live-dot' : ''} style={!wsConnected ? { width: 6, height: 6, borderRadius: '50%', background: 'var(--text-dim)' } : {}} />
+            <span style={{ fontSize: 11, color: wsConnected ? 'var(--text-muted)' : 'var(--text-dim)', fontWeight: 500 }}>
+              {wsConnected ? 'Live' : 'Offline'}
             </span>
           </div>
         </div>
 
         {/* Right: Actions, Notifications, User Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           
-          <button onClick={onCreateProjectClick} className="btn btn-outline btn-sm">
-            + New Project
+          <button onClick={onCreateProjectClick} className="btn btn-secondary btn-sm">
+            <Plus size={13} />
+            <span>New Project</span>
           </button>
 
-          {/* Notifications Bell */}
+          {/* Notifications */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="btn btn-outline btn-sm"
-              style={{ position: 'relative', width: 34, height: 34, padding: 0 }}
+              className="btn btn-ghost btn-sm"
+              style={{ position: 'relative', width: 28, height: 28, padding: 0 }}
               title="Notifications"
             >
-              <Bell size={16} color="var(--text-secondary)" />
+              <Bell size={14} color="var(--text-secondary)" />
               {unreadCount > 0 && (
                 <span style={{
-                  position: 'absolute', top: -3, right: -3,
-                  background: 'var(--color-rose)', color: '#fff',
-                  fontSize: 10, fontWeight: 700, borderRadius: '50%',
-                  width: 17, height: 17, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  position: 'absolute', top: 3, right: 3,
+                  background: 'var(--color-accent)', color: '#fff',
+                  fontSize: 9, fontWeight: 700, borderRadius: 'var(--radius-xs)',
+                  padding: '1px 3px', lineHeight: 1
                 }}>
                   {unreadCount}
                 </span>
@@ -168,27 +180,28 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {showNotifications && (
-              <div className="glass-panel" style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 8,
-                width: 320, borderRadius: 12, padding: 12, boxShadow: 'var(--shadow-lg)',
-                zIndex: 110, background: 'var(--bg-surface)'
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                width: 300, borderRadius: 'var(--radius-sm)', padding: 10,
+                boxShadow: 'var(--shadow-overlay)', zIndex: 110,
+                background: 'var(--bg-surface)', border: '1px solid var(--border-medium)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 8, borderBottom: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>Notifications</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 6, borderBottom: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontWeight: 600, fontSize: 12 }}>Notifications</span>
                   {unreadCount > 0 && (
                     <button
                       onClick={onMarkAllNotificationsRead}
-                      style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-accent)', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}
                     >
                       <CheckCheck size={12} /> Mark all read
                     </button>
                   )}
                 </div>
 
-                <div style={{ maxHeight: 300, overflowY: 'auto', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ maxHeight: 260, overflowY: 'auto', marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {notifications.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-dim)', fontSize: 12 }}>
-                      No notifications yet
+                    <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-dim)', fontSize: 12 }}>
+                      No notifications
                     </div>
                   ) : (
                     notifications.map(n => (
@@ -196,18 +209,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                         key={n.id}
                         onClick={() => onMarkNotificationRead(n.id)}
                         style={{
-                          padding: 10, borderRadius: 8, cursor: 'pointer',
-                          background: n.read ? 'transparent' : 'rgba(99, 102, 241, 0.08)',
-                          border: `1px solid ${n.read ? 'var(--border-subtle)' : 'rgba(99, 102, 241, 0.25)'}`
+                          padding: '8px 10px', borderRadius: 'var(--radius-xs)', cursor: 'pointer',
+                          background: n.read ? 'transparent' : 'var(--bg-surface-raised)',
+                          border: `1px solid ${n.read ? 'var(--border-subtle)' : 'var(--border-medium)'}`
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontWeight: 600, fontSize: 12, color: n.read ? 'var(--text-secondary)' : '#fff' }}>
+                          <span style={{ fontWeight: 500, fontSize: 12, color: n.read ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
                             {n.title}
                           </span>
-                          {!n.read && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-primary)' }} />}
+                          {!n.read && <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--color-accent)' }} />}
                         </div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.4 }}>
                           {n.content}
                         </div>
                       </div>
@@ -218,40 +231,37 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          <div style={{ height: 24, width: 1, background: 'var(--border-subtle)' }} />
+          <div style={{ height: 16, width: 1, background: 'var(--border-subtle)', margin: '0 2px' }} />
 
           {/* Quick RBAC Switcher Dropdown */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className="btn btn-secondary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px' }}
+              className="btn btn-ghost btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 6px' }}
             >
               <img
                 src={currentUser?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
                 alt={currentUser?.full_name}
-                style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }}
+                style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }}
               />
-              <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{currentUser?.full_name?.split(' ')[0]}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>Switch role</div>
-              </div>
-              <ChevronDown size={13} color="var(--text-dim)" />
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>
+                {currentUser?.full_name?.split(' ')[0]}
+              </span>
+              <ChevronDown size={12} color="var(--text-dim)" />
             </button>
 
             {showUserDropdown && (
-              <div className="glass-panel" style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 8,
-                width: 260, borderRadius: 12, padding: 10, boxShadow: 'var(--shadow-lg)',
-                zIndex: 110, background: 'var(--bg-surface)'
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 6,
+                width: 240, borderRadius: 'var(--radius-sm)', padding: 6,
+                boxShadow: 'var(--shadow-overlay)', zIndex: 110,
+                background: 'var(--bg-surface)', border: '1px solid var(--border-medium)'
               }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', padding: '4px 8px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <UserCheck size={13} /> Demo Identity Switcher
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', padding: '4px 6px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+                  Switch Test Persona (RBAC)
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', padding: '2px 8px 8px 8px', borderBottom: '1px solid var(--border-subtle)' }}>
-                  Test RBAC roles instantly without logging out:
-                </div>
-                <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4 }}>
                   {demoUsers.map(user => {
                     const memberRole = members.find(m => m.user_id === user.id)?.role || 'MEMBER';
                     const isCurrent = user.id === currentUser?.id;
@@ -263,26 +273,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                           setShowUserDropdown(false);
                         }}
                         style={{
-                          padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+                          padding: '6px 8px', borderRadius: 'var(--radius-xs)', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          background: isCurrent ? 'var(--bg-surface-highlight)' : 'transparent',
+                          background: isCurrent ? 'var(--bg-surface-hover)' : 'transparent',
                           border: `1px solid ${isCurrent ? 'var(--border-medium)' : 'transparent'}`
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <img
                             src={user.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
                             alt={user.full_name}
-                            style={{ width: 26, height: 26, borderRadius: '50%' }}
+                            style={{ width: 20, height: 20, borderRadius: '50%' }}
                           />
                           <div>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: isCurrent ? '#fff' : 'var(--text-secondary)' }}>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                               {user.full_name}
                             </div>
-                            <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>{user.email}</div>
                           </div>
                         </div>
-                        <span className={`role-badge ${getRoleClass(memberRole)}`} style={{ fontSize: 9 }}>
+                        <span className={`role-tag ${getRoleClass(memberRole)}`} style={{ fontSize: 9 }}>
                           {memberRole}
                         </span>
                       </div>

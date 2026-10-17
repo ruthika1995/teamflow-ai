@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  AlertTriangle, CheckCircle2, Clock, Calendar, BarChart3,
-  TrendingUp, Users, ArrowUpRight, Sparkles, RefreshCw
+  AlertTriangle, CheckCircle2, Clock, Calendar,
+  ArrowRight, Sparkles, RefreshCw
 } from 'lucide-react';
 import { Project, Task, AIRiskAnalysisResponse } from '../types';
 import { api } from '../services/api';
@@ -54,32 +54,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const totalEstHours = tasks.reduce((sum, t) => sum + (t.estimated_hours || 0), 0);
   const totalActualHours = tasks.reduce((sum, t) => sum + (t.actual_hours || 0), 0);
 
-  const getRiskColor = (level?: string) => {
+  const getRiskTagClass = (level?: string) => {
     switch (level) {
-      case 'CRITICAL': return { bg: 'rgba(244, 63, 94, 0.15)', border: 'rgba(244, 63, 94, 0.4)', text: '#fda4af', badge: '#f43f5e' };
-      case 'HIGH': return { bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)', text: '#fde68a', badge: '#f59e0b' };
-      case 'MEDIUM': return { bg: 'rgba(56, 189, 248, 0.15)', border: 'rgba(56, 189, 248, 0.4)', text: '#bae6fd', badge: '#38bdf8' };
-      default: return { bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)', text: '#a7f3d0', badge: '#10b981' };
+      case 'CRITICAL': return 'tag-urgent';
+      case 'HIGH': return 'tag-high';
+      case 'MEDIUM': return 'tag-medium';
+      default: return 'tag-done';
     }
   };
 
-  const riskColors = getRiskColor(riskData?.risk_level);
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '24px 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: '16px 0', maxWidth: 1100 }}>
       
-      {/* Top Header Row with Project Selector */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
+      {/* Project Switcher Bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: 12, paddingBottom: 16, borderBottom: '1px solid var(--border-subtle)'
+      }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-            {currentProject?.name || 'Project Dashboard'}
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-            {currentProject?.description || 'Real-time progress overview, AI delivery risks, and team capacity'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+              {currentProject?.name || 'Project Overview'}
+            </h1>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              ({totalTasks} total tasks)
+            </span>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
+            {currentProject?.description || 'Track deliverables, sprint velocity, and delivery risks.'}
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <select
             className="input"
             value={currentProject?.id || ''}
@@ -87,237 +93,198 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               const p = projects.find(item => item.id === e.target.value);
               if (p) onSelectProject(p);
             }}
-            style={{ width: 220 }}
+            style={{ width: 180, height: 30, fontSize: 12 }}
           >
             {projects.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
 
-          <button onClick={onNavigateToKanban} className="btn btn-primary btn-sm">
-            Open Kanban Board →
+          <button onClick={onNavigateToKanban} className="btn btn-secondary btn-sm">
+            <span>View Board</span>
+            <ArrowRight size={12} />
           </button>
         </div>
       </div>
 
-      {/* 🚨 AI DEADLINE RISK DETECTION BANNER */}
-      {riskData && (
-        <div style={{
-          background: riskColors.bg,
-          border: `1px solid ${riskColors.border}`,
-          borderRadius: 'var(--radius-lg)',
-          padding: '20px 24px',
-          boxShadow: 'var(--shadow-md)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: riskColors.badge,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: `0 0 16px ${riskColors.badge}66`
-              }}>
-                <AlertTriangle size={18} color="#fff" />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>
-                    AI Delivery Risk Analysis
-                  </span>
-                  <span style={{
-                    padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 800,
-                    background: riskColors.badge, color: '#fff', textTransform: 'uppercase'
-                  }}>
-                    {riskData.risk_level} RISK
-                  </span>
-                </div>
-                <div style={{ fontSize: 13, color: riskColors.text, marginTop: 4, maxWidth: 750, lineHeight: 1.4 }}>
-                  {riskData.summary}
-                </div>
-              </div>
-            </div>
+      {/* Structured Sections Hierarchy (Not a generic card grid!) */}
+      
+      {/* 1. PROJECT OVERVIEW */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-md)',
+        padding: '16px 20px'
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 8 }}>
+          Project Progress
+        </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button
-                onClick={() => currentProject && loadRiskAnalysis(currentProject.id)}
-                className="btn btn-secondary btn-sm"
-                disabled={loadingRisk}
-                title="Refresh AI Risk Analysis"
-              >
-                <RefreshCw size={13} className={loadingRisk ? 'spin' : ''} />
-                Re-evaluate
-              </button>
-              <button onClick={onNavigateToSprintPlan} className="btn btn-primary btn-sm">
-                <Sparkles size={13} /> Optimize Sprint
-              </button>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 32, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', fontFamily: 'var(--font-mono)' }}>
+            {progressPct}%
           </div>
 
-          {/* Risk Metrics Strip */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, color: 'var(--text-secondary)' }}>
+            <span><strong>{totalTasks}</strong> total tasks</span>
+            <span style={{ color: 'var(--border-strong)' }}>•</span>
+            <span style={{ color: 'var(--status-success)' }}><strong>{completedCount}</strong> completed</span>
+            <span style={{ color: 'var(--border-strong)' }}>•</span>
+            <span style={{ color: 'var(--color-accent)' }}><strong>{inProgressCount}</strong> in progress</span>
+            <span style={{ color: 'var(--border-strong)' }}>•</span>
+            <span style={{ color: 'var(--text-muted)' }}><strong>{todoCount + inReviewCount}</strong> remaining</span>
+          </div>
+        </div>
+
+        {/* Minimal Progress Bar */}
+        <div style={{ marginTop: 12, height: 4, background: 'var(--bg-surface-sunken)', borderRadius: 2, overflow: 'hidden' }}>
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14,
-            marginTop: 18, paddingTop: 16, borderTop: '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
-            <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Remaining Tasks</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 2 }}>{riskData.remaining_tasks}</div>
-            </div>
-            <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Estimated Work</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 2 }}>{riskData.estimated_work_hours} hrs</div>
-            </div>
-            <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Team Capacity</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 2 }}>{riskData.available_capacity_hours} hrs</div>
-            </div>
-            <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Days to Deadline</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginTop: 2 }}>{riskData.days_to_deadline} days</div>
-            </div>
-          </div>
-
-          {/* Recommendations List */}
-          {riskData.recommendations.length > 0 && (
-            <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(0,0,0,0.3)', borderRadius: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Sparkles size={14} color="var(--color-amber)" /> AI Recommended Actions:
-              </div>
-              <ul style={{ paddingLeft: 20, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {riskData.recommendations.map((rec, idx) => (
-                  <li key={idx}>{rec}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            height: '100%',
+            width: `${progressPct}%`,
+            background: 'var(--color-accent)',
+            borderRadius: 2,
+            transition: 'width 0.3s ease'
+          }} />
         </div>
-      )}
-
-      {/* Primary KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-        
-        {/* Progress Card */}
-        <div className="glass-panel" style={{ padding: 20, borderRadius: 'var(--radius-lg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>PROJECT PROGRESS</span>
-            <TrendingUp size={16} color="var(--color-primary)" />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 800, color: '#fff' }}>{progressPct}%</span>
-            <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{completedCount} of {totalTasks} done</span>
-          </div>
-          <div style={{ marginTop: 12, height: 8, background: 'var(--bg-surface-sunken)', borderRadius: 4, overflow: 'hidden' }}>
-            <div style={{
-              height: '100%',
-              width: `${progressPct}%`,
-              background: 'linear-gradient(90deg, var(--color-primary), var(--color-cyan))',
-              borderRadius: 4,
-              transition: 'width 0.4s ease'
-            }} />
-          </div>
-        </div>
-
-        {/* Task Breakdown Card */}
-        <div className="glass-panel" style={{ padding: 20, borderRadius: 'var(--radius-lg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>ACTIVE PIPELINE</span>
-            <BarChart3 size={16} color="var(--color-cyan)" />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 14 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#cbd5e1' }}>{todoCount}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600 }}>TODO</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#38bdf8' }}>{inProgressCount}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600 }}>DOING</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#c084fc' }}>{inReviewCount}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600 }}>REVIEW</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#34d399' }}>{completedCount}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600 }}>DONE</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Effort & Hours Card */}
-        <div className="glass-panel" style={{ padding: 20, borderRadius: 'var(--radius-lg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>ESTIMATED WORK</span>
-            <Clock size={16} color="var(--color-amber)" />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 800, color: '#fff' }}>{totalEstHours}h</span>
-            <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{totalActualHours}h logged</span>
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 8 }}>
-            Avg effort per task: {totalTasks > 0 ? (totalEstHours / totalTasks).toFixed(1) : 0}h
-          </div>
-        </div>
-
-        {/* Milestone / Deadline Card */}
-        <div className="glass-panel" style={{ padding: 20, borderRadius: 'var(--radius-lg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>PROJECT DEADLINE</span>
-            <Calendar size={16} color="var(--color-rose)" />
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginTop: 12 }}>
-            {currentProject?.deadline ? new Date(currentProject.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No set deadline'}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--color-emerald)', marginTop: 6, fontWeight: 600 }}>
-            {riskData?.days_to_deadline ? `${riskData.days_to_deadline} days remaining` : 'Schedule on track'}
-          </div>
-        </div>
-
       </div>
 
-      {/* Active Tasks & Priority Backlog */}
-      <div className="glass-panel" style={{ borderRadius: 'var(--radius-lg)', padding: 22 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Priority Deliverables & Active Status</h3>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Critical items currently in-flight across the team</p>
+      {/* 2. PROJECT HEALTH & DELIVERY RISK */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-md)',
+        padding: '16px 20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+            Delivery Schedule & Health Analysis
           </div>
-          <button onClick={onNavigateToKanban} className="btn btn-outline btn-sm">
-            View All in Board
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              onClick={() => currentProject && loadRiskAnalysis(currentProject.id)}
+              className="btn btn-ghost btn-sm"
+              disabled={loadingRisk}
+              title="Refresh Health Analysis"
+              style={{ fontSize: 11, padding: '2px 6px' }}
+            >
+              <RefreshCw size={11} className={loadingRisk ? 'spin' : ''} />
+              <span>Recalculate</span>
+            </button>
+          </div>
+        </div>
+
+        {riskData ? (
+          <div>
+            {/* Inline Health Metrics Row */}
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12,
+              padding: '12px 14px', background: 'var(--bg-surface-sunken)', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-subtle)'
+            }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Delivery Risk</div>
+                <div style={{ marginTop: 4 }}>
+                  <span className={`tag ${getRiskTagClass(riskData.risk_level)}`} style={{ fontSize: 11, textTransform: 'uppercase' }}>
+                    {riskData.risk_level}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Estimated Work</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+                  {riskData.estimated_work_hours} hrs
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Available Capacity</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+                  {riskData.available_capacity_hours} hrs
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Days to Deadline</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+                  {riskData.days_to_deadline} days
+                </div>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 12, lineHeight: 1.5 }}>
+              {riskData.summary}
+            </div>
+
+            {/* Recommendations List */}
+            {riskData.recommendations.length > 0 && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
+                  Recommended Adjustments:
+                </div>
+                <ul style={{ paddingLeft: 18, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  {riskData.recommendations.map((rec, idx) => (
+                    <li key={idx}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>Calculating delivery health...</div>
+        )}
+      </div>
+
+      {/* 3. PRIORITY DELIVERABLES */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-md)',
+        padding: '16px 20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+            Active Tasks in Flight
+          </div>
+
+          <button onClick={onNavigateToKanban} className="btn btn-ghost btn-sm" style={{ fontSize: 11 }}>
+            View Full Board
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {tasks.slice(0, 5).map(task => (
             <div
               key={task.id}
               onClick={onNavigateToKanban}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '12px 16px', background: 'var(--bg-surface-sunken)',
-                borderRadius: 8, border: '1px solid var(--border-subtle)',
-                cursor: 'pointer', transition: 'background 0.2s ease'
+                padding: '8px 10px', background: 'var(--bg-surface-sunken)',
+                borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-subtle)',
+                cursor: 'pointer', transition: 'background var(--transition-fast)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span className={`badge badge-${task.status.toLowerCase()}`}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className={`tag tag-${task.status.toLowerCase()}`}>
                   {task.status.replace('_', ' ')}
                 </span>
-                <span style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{task.title}</span>
+                <span style={{ fontWeight: 500, fontSize: 13, color: 'var(--text-primary)' }}>{task.title}</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <span className={`badge badge-${task.priority.toLowerCase()}`}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className={`tag tag-${task.priority.toLowerCase()}`}>
                   {task.priority}
                 </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
-                  <Clock size={12} />
-                  <span>{task.estimated_hours}h</span>
-                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                  {task.estimated_hours}h
+                </span>
                 {task.assignee && (
                   <img
                     src={task.assignee.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
                     alt={task.assignee.full_name}
                     title={task.assignee.full_name}
-                    style={{ width: 22, height: 22, borderRadius: '50%' }}
+                    style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }}
                   />
                 )}
               </div>

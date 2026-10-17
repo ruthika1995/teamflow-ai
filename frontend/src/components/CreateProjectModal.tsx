@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Calendar, FolderPlus } from 'lucide-react';
+import { X, Plus, FolderPlus } from 'lucide-react';
 import { Workspace } from '../types';
 import { api } from '../services/api';
 
@@ -45,47 +45,47 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 480, padding: 24 }}>
+      <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 440, padding: 20 }}>
         
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FolderPlus size={18} color="var(--color-primary)" />
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>New Project</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <FolderPlus size={15} color="var(--color-accent)" />
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>New Project</h2>
           </div>
-          <button onClick={onClose} className="btn btn-outline" style={{ width: 30, height: 30, padding: 0 }}>
-            <X size={15} />
+          <button onClick={onClose} className="btn btn-ghost" style={{ width: 24, height: 24, padding: 0 }}>
+            <X size={14} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Project Name *</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Project Name *</label>
             <input
               type="text"
               required
-              placeholder="e.g. Next-Gen Mobile App"
+              placeholder="e.g. Mobile Application"
               className="input"
               value={name}
               onChange={e => setName(e.target.value)}
-              style={{ marginTop: 4 }}
+              style={{ marginTop: 4, height: 32 }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Description & Scope</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Description</label>
             <textarea
-              placeholder="Describe what this project will deliver..."
+              placeholder="Project goals, milestones, and scope..."
               className="input"
               value={description}
               onChange={e => setDescription(e.target.value)}
-              style={{ marginTop: 4, minHeight: 70 }}
+              style={{ marginTop: 4, minHeight: 60 }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase' }}>Target Deadline</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Target Deadline</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
               <input
                 type="number"
                 min="1"
@@ -93,19 +93,19 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 className="input"
                 value={deadlineDays}
                 onChange={e => setDeadlineDays(parseInt(e.target.value) || 14)}
-                style={{ width: 90 }}
+                style={{ width: 70, height: 30, fontFamily: 'var(--font-mono)' }}
               />
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>days from today</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>days from today</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
-            <button type="button" onClick={onClose} className="btn btn-outline">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">
               Cancel
             </button>
-            <button type="submit" disabled={loading || !name.trim()} className="btn btn-primary">
-              <Plus size={14} />
-              {loading ? 'Creating...' : 'Create Project'}
+            <button type="submit" disabled={loading || !name.trim()} className="btn btn-primary btn-sm">
+              <Plus size={13} />
+              <span>{loading ? 'Creating...' : 'Create Project'}</span>
             </button>
           </div>
 
